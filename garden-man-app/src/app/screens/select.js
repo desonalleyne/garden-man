@@ -31,7 +31,6 @@ class MySelect extends React.Component {
   }
 
   handleChange = event => {
-    alert(event.target.name + event.target.value);
     this.setState({ [event.target.name]: event.target.value });
   };
 

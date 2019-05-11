@@ -158,12 +158,6 @@ class MiniDrawer extends React.Component {
               </ListItemIcon>
               <ListItemText primary="Home" />
             </ListItem>
-            <ListItem button component={Link} to="/schedules">
-              <ListItemIcon>
-                <SchedulesIcon />
-              </ListItemIcon>
-              <ListItemText primary="Schedules" />
-            </ListItem>
             <ListItem button component={Link} to="/zones">
               <ListItemIcon>
                 <ZonesIcon />
@@ -175,6 +169,12 @@ class MiniDrawer extends React.Component {
                 <RoutesIcon />
               </ListItemIcon>
               <ListItemText primary="Routes" />
+            </ListItem>
+            <ListItem button component={Link} to="/schedules">
+              <ListItemIcon>
+                <SchedulesIcon />
+              </ListItemIcon>
+              <ListItemText primary="Schedules" />
             </ListItem>
             <ListItem button component={Link} to="/settings">
               <ListItemIcon>

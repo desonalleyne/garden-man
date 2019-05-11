@@ -20,7 +20,7 @@ const RouteTable = props => (
   <Table padding='none'>
     <TableHead>
       <TableRow>
-        <TableCell>id</TableCell>
+        <TableCell>No.</TableCell>
         <TableCell align="right">Name</TableCell>
         <TableCell align="right">Description</TableCell>
         <TableCell align="right">Source Zone</TableCell>
@@ -33,9 +33,9 @@ const RouteTable = props => (
       { 
         props.routes.length > 0 ? 
         (
-          props.routes.map(route=> (
+          props.routes.map((route,idx)=> (
             <TableRow key={route.Id}>
-              <TableCell component="th" scope="row">{route.id}</TableCell>
+              <TableCell component="th" scope="row">{idx+1}</TableCell>
               <TableCell align={route.name.numeric ? 'right' : 'left'}>{route.name}</TableCell>
               <TableCell align={route.description.numeric ? 'right' : 'left'}>{route.description}</TableCell>
               <TableCell align={route.source_zone.name.numeric ? 'right' : 'left'}>{route.source_zone.name}</TableCell>

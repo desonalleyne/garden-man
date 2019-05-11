@@ -43,10 +43,8 @@ const ZoneForm =  props => (
             label="Choose a pin number"
             value={props.pin}
             onChange={props.handleChange}
-            options={props.options}
+            options={props.options.filter((option) => { return option.is_free || option.value === props.prevPin})}
           />
-          <br />
-          <br />
           <br />
           <br />
             <FormControl component="fieldset" >
@@ -65,21 +63,19 @@ const ZoneForm =  props => (
                   labelPlacement="start"
                 />
                 <FormControlLabel
-                  value="target"
-                  control={<Radio color="primary" />}
-                  label="Target"
-                  labelPlacement="start"
-                />
-                <FormControlLabel
                   value="pass"
                   control={<Radio color="primary" />}
                   label="Passthrough"
                   labelPlacement="start"
                 />
+                <FormControlLabel
+                  value="target"
+                  control={<Radio color="primary" />}
+                  label="Target"
+                  labelPlacement="start"
+                />
               </RadioGroup>
             </FormControl>
-            <br />
-            <br />
         </div>
         )
 

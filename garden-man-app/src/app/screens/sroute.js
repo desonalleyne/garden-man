@@ -74,7 +74,7 @@ class SRoute extends React.Component{
   )};
 
   toggleRouteForm (){
-    this.setState({routeFormVisible: !this.state.routeFormVisible, editOrAdd: 'add'})
+    this.setState({routeFormVisible: !this.state.routeFormVisible})
   }
 
   toggleChip = (id, category) => {
@@ -109,7 +109,6 @@ class SRoute extends React.Component{
   }
 
   populateForm = (route) => {
-    this.toggleRouteForm()
     this.setState({
       f_id: route.id,
       f_name: route.name,
@@ -119,9 +118,20 @@ class SRoute extends React.Component{
       f_target: route.target_group.zones.map( zone => {return zone.id} ),
       editOrAdd: 'edit' 
     })
+    this.toggleRouteForm()
   }
 
   addRoute = () => {
+    this.setState({editOrAdd: 'add'})
+    this.toggleRouteForm()
+  }
+
+  deleteRoute = () => {
+
+  }
+
+
+  addOrEditRoute = () => {
     const route = {
       id: this.state.f_id, 
       name: this.state.f_name,
@@ -153,11 +163,11 @@ class SRoute extends React.Component{
           })
         }
         console.log(this.state.routes)
+        this.toggleFeedbackDialog("Route successfully " + (this.state.editOrAdd === "add" ? "added" : "editted"))
         this.toggleRouteForm()
-        this.toggleFeedbackDialog("Route successfully " + this.state.editOrAdd === 'add' ? "added" : "editted")
       })
       .catch(error => {
-        this.toggleFeedbackDialog('Error ' + this.state.editOrAdd === 'add' ? "adding" : "editting" + 'route: ' + error)
+        this.toggleFeedbackDialog('Route not ' + (this.state.editOrAdd === 'add' ? "added. " : "editted. ") + error)
         console.log(error)
       })
     
@@ -170,11 +180,12 @@ class SRoute extends React.Component{
          <br />
         <Divider variant="middle" />
          <br />
-        <Button align="right" onClick={this.toggleRouteForm} color='secondary' variant="contained">Add Route</Button>
+        <Button align="right" onClick={this.addRoute} color='secondary' variant="contained">Add Route</Button>
         
         <RouteTable 
           routes={this.state.routes}
           populateForm={this.populateForm}
+          deleteRoute={this.deleteRoute}
         /> 
         
         <AlertDialog 
@@ -195,14 +206,14 @@ class SRoute extends React.Component{
             }
             open={this.state.routeFormVisible}
             onClose={this.toggleRouteForm}
-            onSubmit={this.addRoute}
+            onSubmit={this.addOrEditRoute}
         />
         
 
         <SuccessDialog 
           open={this.state.feedbackDialogVisible} 
-          onClose={() => {this.toggleFeedbackDialog('')}} 
-          title='Add Route' 
+          onClose={() => {this.toggleFeedbackDialog()}} 
+          title={this.state.editOrAdd === 'add' ? 'Add Route' : 'Edit Route'}
           content={this.state.feedbackDialogMessage}>  
         </SuccessDialog>
 

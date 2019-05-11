@@ -1,8 +1,6 @@
 import React from "react";
-// import HorizontalLinearStepper from "./stepper";
 //import Dialog from "./dialog";
 import MySelect from "./select";
-// import AddSchedule from "./addSchedule";
 import AlertDialog from "./alertDialog";
 import SuccessDialog from "./successDialog";
 import { withStyles } from "@material-ui/core/styles";
@@ -52,32 +50,37 @@ class Zone extends React.Component {
       description: "",
       category: "",
       pin: "",
+      prevPin: "",
       options: [],
       feedbackDialogVisible: false,
       feedbackDialogMessage: '',
       zoneFormVisible: false,
-      zones: []
+      zones: [],
+      addOrEdit: 'add'
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     // this.handleClickOpen = this.handleClickOpen.bind(this);
-    this.hideZoneForm = this.hideZoneForm.bind(this);
-    this.showZoneForm = this.showZoneForm.bind(this);
+    this.toggleZoneForm = this.toggleZoneForm.bind(this);
     this.showFeedbackDialog = this.showFeedbackDialog.bind(this);
     this.addZone = this.addZone.bind(this);
+    this.addOrEditZone = this.addOrEditZone.bind(this);
     this.deleteZone = this.deleteZone.bind(this);
     this.editZone = this.editZone.bind(this);
+    this.clearForm = this.clearForm.bind(this);
+    this.updatePins = this.updatePins.bind(this);
   }
 
   componentDidMount(){
     axios.all([
-      axios.get('http://localhost:5000/pin/free'),
+      axios.get('http://localhost:5000/pin'),
       axios.get('http://0.0.0.0:5000/zone')
     ])
     .then(axios.spread((_pins, _zones) => {
+      console.log(_zones, _pins)
         const options = _pins.data.map(option => {
-          return {'label': option.name, 'value': option.number};
+          return {'label': option.name, 'value': option.number, 'is_free': option.is_free};
         })
         const zones = _zones.data;
         this.setState({zones});
@@ -85,18 +88,21 @@ class Zone extends React.Component {
       }));
     }
 
-  showZoneForm = (name) => {
-    console.log("showZoneForm called")
-    console.log(name.target.name)
-    this.setState({ zoneFormVisible: true });
+  toggleZoneForm = () => {
+    this.setState({ zoneFormVisible: !this.state.zoneFormVisible });
   };
 
-  hideZoneForm(){
-    console.log("hideZoneForm called")
-    this.setState({ zoneFormVisible: false });
-    console.log(this.state)
-    // this.showFeedbackDialog('test message');
-  };
+  updatePins = () =>{
+    axios.get('http://localhost:5000/pin')
+    .then((resp) => {
+      const options = resp.data.map(option => {
+          return {'label': option.name, 'value': option.number, 'is_free': option.is_free};
+      })
+      console.log("updating pins")
+      console.log(resp.data)
+      this.setState({options});
+    })
+  }
 
   hideFeedbackDialog = () => {
     this.setState({ feedbackDialogVisible: false });
@@ -118,29 +124,64 @@ class Zone extends React.Component {
     // console.log(this.state);
   }
   
-  addZone(event){
+  clearForm = () => {
+    this.setState(
+        {
+          id: "",
+          name: "",
+          description: "",
+          category: "",
+          pin: ""
+        })
+  }
+
+  addZone(){
+    this.setState({addOrEdit: 'add'})
+    this.clearForm()
+    this.toggleZoneForm()
+  }
+
+  addOrEditZone(event){
     const zone = {
+      id: this.state.id,
       name: this.state.name,
       description: this.state.description,
       category: this.state.category, 
       pin: this.state.pin
     }
+    this.state.addOrEdit === 'add' ? delete zone.id: alert('edit')
     console.log(zone);
     axios({
-      method: 'post',
+      method: this.state.addOrEdit === 'add' ? 'post' : 'put',
       url: 'http://0.0.0.0:5000/zone',
-      data: {zone}
+      data: zone
     })
-    .then(res => {
-      this.showFeedbackDialog('Added zone ' + this.state.name)
-      console.log(res);
-      this.hideZoneForm();
-      zone.id = this.state.zones.length + 1
-      this.setState({zones: [...this.state.zones,zone] })
-      console.log(res.data);
+    .then(resp => {
+      console.log(resp)
+      this.clearForm();
+      this.toggleZoneForm();
+      this.updatePins();
+
+      
+      if (this.state.addOrEdit === 'add'){
+        this.setState({zones: [...this.state.zones, resp.data]})
+      }else{
+        this.setState({zones: this.state.zones.map( (r) => {
+          if (r.id === resp.data.id){
+            return resp.data
+          }else{
+            return r
+          }
+        })})
+      }
+
+      this.showFeedbackDialog(this.state.name + (this.state.addOrEdit === 'add' ? ' added' : ' editted'))
+
+      // zone.id = this.state.zones.length + 1
+      // this.setState({zones: [...this.state.zones,zone] })
     })
     .catch(error => {
-      this.showFeedbackDialog('Error adding zone ' + error)
+      this.showFeedbackDialog('Cannot complete action: ' + error)
       console.log(error)
     })
   }
@@ -154,91 +195,19 @@ class Zone extends React.Component {
   }
   
   editZone(zone){
-    this.setState({id: zone.id, name: zone.name, description: zone.description, pin: zone.pin, category: zone.category, zoneFormVisible: true} )
+    console.log(zone)
+    this.updatePins()
+    this.setState({id: zone.id, name: zone.name, description: zone.description, pin: zone.pin, prevPin: zone.pin, category: zone.category,addOrEdit:'edit'} )
+    this.toggleZoneForm()
   }
 
 
   handleSubmit(event){
-    // alert("im clicked")
-    this.addZone(event)
+    this.addOrEditZone(event)
   }
 
   render() {
     const { classes } = this.props;
-    const addZoneContent = (
-      <div>
-          <TextField
-            required
-            id="name"
-            name="name"
-            value={this.state.name}
-            label="Zone Name"
-            placeholder="Zone Name"
-            onChange={this.handleChange}
-            className={classes.textField}
-            margin="normal"
-          />
-
-          <br />
-          <br />
-
-          <TextField
-            id="description"
-            name="description"
-            value={this.state.description}
-            label="Description"
-            placeholder="Description"
-            onChange={this.handleChange}
-            className={classes.textField}
-            margin="normal"
-          />
-          <br />
-          <br />              
-          <MySelect
-            name="Pin"
-            label="Choose a pin number"
-            value={this.state.pin}
-            onChange={this.handleChange}
-            options={this.state.options}
-          />
-          <br />
-          <br />
-          <br />
-          <br />
-            <FormControl component="fieldset" className={classes.formControl}>
-              <FormLabel component="legend">Zone Category</FormLabel>
-              <RadioGroup
-                row
-                aria-label="category"
-                name="category"
-                className={classes.group}
-                value={this.state.category}
-                onChange={this.handleChange}
-              >
-                <FormControlLabel
-                  value="source"
-                  control={<Radio color="primary" />}
-                  label="Source"
-                  labelPlacement="start"
-                />
-                <FormControlLabel
-                  value="target"
-                  control={<Radio color="primary" />}
-                  label="Target"
-                  labelPlacement="start"
-                />
-                <FormControlLabel
-                  value="pass"
-                  control={<Radio color="primary" />}
-                  label="Passthrough"
-                  labelPlacement="start"
-                />
-              </RadioGroup>
-            </FormControl>
-            <br />
-            <br />
-        </div>
-        )
   
     return (
       <div>
@@ -250,26 +219,27 @@ class Zone extends React.Component {
         <SuccessDialog 
           open={this.state.feedbackDialogVisible} 
           onClose={this.hideFeedbackDialog} 
-          title='Add Zone' 
+          title={this.state.addOrEdit === 'add' ? "Add Zone" : "Edit Zone" } 
           content={this.state.feedbackDialogMessage}>  
         </SuccessDialog>
 
-        <Button onClick={this.showZoneForm} color='secondary' variant="contained">Add Zone</Button>
+        <Button onClick={this.addZone} color='secondary' variant="contained">Add Zone</Button>
         <AlertDialog 
             name='alertDialog'
-            title="Add Zone"
+            title={this.state.addOrEdit === 'add' ? "Add Zone" : "Edit Zone" } 
             content={
               <ZoneForm 
                 name={this.state.name} 
                 description={this.state.description}
                 pin={this.state.pin}
+                prevPin={this.state.prevPin}
                 handleChange={this.handleChange}
                 options={this.state.options}
                 category={this.state.category}
               />
             }
             open={this.state.zoneFormVisible}
-            onClose={this.hideZoneForm}
+            onClose={this.toggleZoneForm}
             onSubmit={this.handleSubmit}
           />
           
