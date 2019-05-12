@@ -12,6 +12,7 @@ import FormLabel from "@material-ui/core/FormLabel";
 // import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import Slider from "@material-ui/lab/Slider";
+import Chip from '@material-ui/core/Chip';
 import * as moment from "moment";
 import aRadio from "./radio";
 import HorizontalLinearStepper from "./stepper";
@@ -34,6 +35,11 @@ const styles = theme => ({
     alignItems: "center",
     padding: `${theme.spacing.unit * 5}px ${theme.spacing.unit * 5}px ${theme
       .spacing.unit * 5}px`
+  },
+  content: {
+    textAlign: 'center',
+    margin: 5,
+    marginRight: 5,
   }
 });
 
@@ -43,12 +49,14 @@ class AddSchedule extends React.Component {
     this.state = {
       date: moment().format("YYYY-MM-DD"),
       time: moment().format("HH:mm:ss"),
+      days: [1,0,0,0,0,1,1],
       duration: 15,
-      aSelect: "",
-      pin: "",
+      route: "",
       scheduleType: "repeat",
-      availableDays: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+      aSelect: "",
+      availableDays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
       checkedDays: "",
+      isEnabled: true,
       availableValues: [
         {
           value: "sun",
@@ -127,8 +135,6 @@ class AddSchedule extends React.Component {
     });
   }
 
-
-
   handleSlider(event, value) {
     this.setState({
       duration: value
@@ -142,32 +148,16 @@ class AddSchedule extends React.Component {
     });
   }
 
+  toggleDay = (idx) => {
+    const newdays = [...this.state.days];
+    newdays[idx] = 1 - newdays[idx]
+    this.setState({ days: newdays })
+  }
   render() {
     const { classes } = this.props;
 
-    const checkboxes = this.state.availableDays.map(day => {
-      return (
-        <Checkbox
-          label={day}
-          key={day.toString()}
-          onChange={() => this.handleCheck(day)}
-          checked={this.state.checkedDays.includes(day)}
-        />
-      );
-    });
-
-    const daysInput = (
-      <FormControl component="fieldset" className={classes.formControl}>
-        <FormLabel component="legend">Schedule Days</FormLabel>
-        <MyCheckboxes
-          handleCheck={this.handleCheck}
-          availableValues={this.state.availableValues}
-          checked={this.state.checkedDays}
-        />
-      </FormControl>
-    );
-
     const scheduleTypeInput = (
+      <div className={classes.content}>
       <FormControl component="fieldset" className={classes.formControl}>
         <FormLabel component="legend">Schedule Type</FormLabel>
         <RadioGroup
@@ -192,56 +182,66 @@ class AddSchedule extends React.Component {
           />
         </RadioGroup>
       </FormControl>
+      </div>
     );
+
 
     const dateInput = (
-      <FormControl component="fieldset" className={classes.formControl}>
-        <FormLabel component="legend">Schedule Date</FormLabel>
-        <TextField
-          id="date"
-          type="date"
-          name="date"
-          // defaultValue={this.state.date}
-          value={this.state.date}
-          onChange={this.handleChange}
-          className={classes.textField}
-          InputLabelProps={{
-            shrink: true
-          }}
-        />
-      </FormControl>
+        <div className={classes.content}>
+          <FormLabel component="legend">Schedule Date</FormLabel>
+          <TextField
+            id="date"
+            type="date"
+            name="date"
+            // defaultValue={this.state.date}
+            value={this.state.date}
+            onChange={this.handleChange}
+            className={classes.textField}
+            InputLabelProps={{
+              shrink: true
+            }}
+          />
+        </div>
     );
 
- 
-
+    const daysInput = (
+      <div className={classes.content}>
+        <FormLabel component="legend">Schedule Days</FormLabel>
+        <div className={classes.content}>
+        { this.state.days.map((day,idx) => {
+               return <Chip 
+                   key={idx} 
+                   label={this.state.availableDays[idx]} 
+                   onClick={() => {this.toggleDay(idx)}} 
+                   color={this.state.days[idx] === 1 ? 'primary' : ''}
+                   className={classes.content}
+                 />
+          })
+        }
+        </div> 
+      </div>
+    );
 
     const sliderInput = (
-      <FormControl component="fieldset" className={classes.formControl}>
-        <FormLabel component="legend">Schedule Duration </FormLabel>
-        {this.state.zones.map((zone, idx) => {
-          return (
-            <div>
-              <Slider
-                value={this.state.duration}
-                name="duration"
-                min={1}
-                max={60}
-                step={1}
-                aria-labelledby="label"
-                onChange={this.handleSlider}
-              /><MySelect
-                name="pin"
-                value={this.state.pin}
-                onChange={this.handleChange}
-                options={this.state.availableValues}
-              />
-              <p>
-                {this.state.duration} {this.state.duration < 2 ? "min" : "mins"}
-              </p>
-              <button type="button"  className="small">-</button>
-            </div>
-          )})}
-      </FormControl>
+      <div className={classes.content}>
+        <FormControl component="fieldset" className={classes.formControl}>
+          <FormLabel component="legend">Schedule Duration (in seconds)</FormLabel>
+              <div className={classes.content}>
+                <Slider
+                  value={this.state.duration}
+                  name="duration"
+                  min={1}
+                  max={300}
+                  step={1}
+                  aria-labelledby="label"
+                  onChange={this.handleSlider}
+                />
+                <p>
+                  {this.state.duration} {this.state.duration < 2 ? "sec" : "secs"}
+                </p>
+              </div>
+        </FormControl>
+      </div>
     );
 
     const timeInput = (
@@ -270,38 +270,29 @@ class AddSchedule extends React.Component {
         <HorizontalLinearStepper
           steps={[
             "Choose a Schedule type",
-            "When should the schedule run?",
-            "Which zones should be watered",
-            "How long should each zone be watered?"
+            "When to run the schedule?",
+            "Which route to water?",
+            "How long to water each target zone?"
           ]}
-          optional={[false, false, false, false]}
+          optional={[false, false, false, false]
+          }
+          open={this.props.open}
+          onClose={this.props.onClose}
+          name={this.props.name}
+          title={this.props.title}
+          onSubmit={this.props.onSubmit}
         >
           {scheduleTypeInput}
-          {this.state.scheduleType === "once" ? (
-            <div>
-              {dateInput}
-              <br />
-              <br />
+          {
+            <div className={classes.content}>
+              { this.state.scheduleType === "once" ? dateInput : daysInput } 
+              <br/> <br/>
               {timeInput}
             </div>
-          ) : (
-            <div>
-              {daysInput}
-              <br />
-              <br />
-              {timeInput}
-            </div>
-          )}
+            }
           {sliderInput}
-          <Demo name={"How long?"} />
+          {sliderInput}
         </HorizontalLinearStepper>
-
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
 
         <aRadio
           name="aSelect"
@@ -310,7 +301,7 @@ class AddSchedule extends React.Component {
           value={this.props.aSelect}
           legend="aRadioLegend"
         />
-        <p>aSelect: {this.state.aSelect}</p>
+       {/* <p>aSelect: {this.state.aSelect}</p>
         <p>pin: {this.state.pin}</p>
         <p>duration: {this.state.duration}</p>
         <p>date: {this.state.date}</p>
@@ -319,6 +310,7 @@ class AddSchedule extends React.Component {
         <p>checkedDays: {this.state.checkedDays}</p>
 
         <br />
+      */}
       </div>
     );
   }

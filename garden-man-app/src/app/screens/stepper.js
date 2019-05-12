@@ -6,18 +6,28 @@ import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogTitle from '@material-ui/core/DialogTitle';
 
 const styles = theme => ({
   root: {
-    width: '90%',
+    width: '100%',
   },
   button: {
     marginRight: theme.spacing.unit,
+    position: 'sticky',
+    bottom: 0,
   },
   instructions: {
     marginTop: theme.spacing.unit,
     marginBottom: theme.spacing.unit,
   },
+  content: {
+    textAlign: 'center',
+  }
+
 });
 
 // function getSteps() {
@@ -109,25 +119,35 @@ class HorizontalLinearStepper extends React.Component {
     const { activeStep } = this.state;
 
     return (
-      <div className={classes.root}>
-        <Stepper activeStep={activeStep} alternativeLabel>
-          {steps.map((label, index) => {
-            const props = {};
-            const labelProps = {};
-            if (this.isStepOptional(index)) {
-              labelProps.optional = <Typography variant="caption">Optional</Typography>;
-            }
-            if (this.isStepSkipped(index)) {
-              props.completed = false;
-            }
-            return (
-              <Step key={label} {...props}>
-                <StepLabel {...labelProps}>{label}</StepLabel>
-              </Step>
-            );
-          })}
-        </Stepper>
-        <div>
+      <Dialog 
+          className={classes.root}
+          open={this.props.open}
+          onClose={this.props.onClose}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+          fullWidth={true}
+          maxWidth='sm'>
+        <DialogTitle>   
+          <DialogTitle id="scroll-dialog-title">{this.props.title}</DialogTitle>
+
+          <Stepper activeStep={activeStep} alternativeLabel>
+            {steps.map((label, index) => {
+              const props = {};
+              const labelProps = {};
+              if (this.isStepOptional(index)) {
+                labelProps.optional = <Typography variant="caption">Optional</Typography>;
+              }
+              if (this.isStepSkipped(index)) {
+                props.completed = false;
+              }
+              return (
+                <Step key={label} {...props}>
+                  <StepLabel {...labelProps}>{label}</StepLabel>
+                </Step>
+              );
+            })}
+          </Stepper>
+        </DialogTitle>
           {activeStep === steps.length ? (
             <div>
               <Typography className={classes.instructions}>
@@ -138,42 +158,55 @@ class HorizontalLinearStepper extends React.Component {
               </Button>
             </div>
           ) : (
-            <div>
+          <div>
+            <DialogContent>
               <Typography className={classes.instructions}>{getStepContent(activeStep, this.props.children)}</Typography>
-              <br/>
-              <br/>
-              <br/>
-              <div>
-                <Button
-                  disabled={activeStep === 0}
-                  onClick={this.handleBack}
-                  className={classes.button}
-                >
-                  Back
-                </Button>
-                {this.isStepOptional(activeStep) && (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={this.handleSkip}
-                    className={classes.button}
-                  >
-                    Skip
-                  </Button>
-                )}
-                <Button
+            </DialogContent>
+
+            <DialogActions className={classes.content}>
+              <Button className={classes.content}
+                disabled={activeStep === 0}
+                onClick={this.handleBack}
+                className={classes.button}
+              >
+                Back
+              </Button>
+              {this.isStepOptional(activeStep) && (
+                <Button className={classes.content}
                   variant="contained"
                   color="primary"
-                  onClick={this.handleNext}
+                  onClick={this.handleSkip}
                   className={classes.button}
                 >
-                  {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                  Skip
                 </Button>
-              </div>
-            </div>
+              )}
+              {activeStep === steps.length - 1 ? 
+              <Button className={classes.content}
+                variant="contained"
+                color="primary"
+                onClick={this.props.onSubmit}
+                className={classes.button}
+              >Save
+              </Button>
+               : ''
+              }
+
+              {activeStep != steps.length - 1 ? 
+              <Button className={classes.content}
+                variant="contained"
+                color="primary"
+                onClick={this.handleNext}
+                className={classes.button}
+              > 
+                Next
+              </Button>
+              : ''
+            }
+            </DialogActions>
+          </div>
           )}
-        </div>
-      </div>
+      </Dialog>
     );
   }
 }
